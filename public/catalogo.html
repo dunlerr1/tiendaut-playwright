@@ -1,48 +1,71 @@
+
 <!doctype html>
 <html lang="es">
-<head><meta charset="utf-8"><title>Catálogo | TiendaUT</title></head>
-<main>
+<head>
+  <meta charset="utf-8">
+  <title>Catálogo | TiendaUT</title>
+</head>
 <body>
-  <h1>Catálogo</h1>
-  <p>Carrito: <span data-testid="contador-carrito">0</span> productos</p>
-  <input placeholder="Buscar producto" id="buscar">
-  <button id="vaciar">Vaciar carrito</button>
+  <main>
+    <h1>Catálogo</h1>
+    <p>Carrito: <span data-testid="contador-carrito">0</span> productos</p>
 
-  <ul id="lista"><li>Cargando...</li></ul>
-  <script>
-    let carrito = 0;
-    const lista = document.getElementById('lista');
-    const contador = document.querySelector('[data-testid="contador-carrito"]');
-    let productos = [];
+    <label for="buscar">Buscar producto</label>
+    <input placeholder="Buscar producto" id="buscar">
 
-    function pintar(filtro = '') {
-      lista.innerHTML = '';
-      productos
-        .filter(p => p.nombre.toLowerCase().includes(filtro.toLowerCase()))
-        .forEach(p => {
-          const li = document.createElement('li');
-          li.dataset.testid = 'producto';
-          li.innerHTML = `<h2>${p.nombre}</h2><span>$${p.precio}</span>
-                          <button>Agregar al carrito</button>`;
-          li.querySelector('button').addEventListener('click', () => {
-            carrito++;
-            contador.textContent = carrito;
+    <button id="vaciar">Vaciar carrito</button>
+
+    <ul id="lista"><li>Cargando...</li></ul>
+
+    <script>
+      let carrito = 0;
+      const lista = document.getElementById('lista');
+      const contador = document.querySelector('[data-testid="contador-carrito"]');
+      let productos = [];
+
+      function pintar(filtro = '') {
+        lista.innerHTML = '';
+        productos
+          .filter(p => p.nombre.toLowerCase().includes(filtro.toLowerCase()))
+          .forEach(p => {
+            const li = document.createElement('li');
+            li.dataset.testid = 'producto';
+            li.innerHTML = `<h2>${p.nombre}</h2><span>$${p.precio}</span>
+                            <button>Agregar al carrito</button>`;
+
+            li.querySelector('button').addEventListener('click', () => {
+              carrito++;
+              contador.textContent = carrito;
+            });
+
+            lista.appendChild(li);
           });
-          lista.appendChild(li);
+      }
+
+      fetch('/api/productos')
+        .then(r => {
+          if (!r.ok) {
+            throw new Error('Error al cargar productos');
+          }
+          return r.json();
+        })
+        .then(data => {
+          productos = data;
+          pintar(document.getElementById('buscar').value);
+        })
+        .catch(() => {
+          lista.innerHTML = '<li>No pudimos cargar los productos</li>';
         });
-    }
 
-    fetch('/api/productos').then(r => r.json()).then(data => {
-  productos = data;
-  pintar(document.getElementById('buscar').value);
-});
+      document.getElementById('buscar').addEventListener('input', e => {
+        pintar(e.target.value);
+      });
 
-    // BUG INTENCIONAL: la función "reiniciarContador" no existe
-    document.getElementById('vaciar').addEventListener('click', () => {
-      carrito = 0;
-      reiniciarContador();
-    });
-  </script>
+      document.getElementById('vaciar').addEventListener('click', () => {
+        carrito = 0;
+        contador.textContent = carrito;
+      });
+    </script>
   </main>
 </body>
 </html>
